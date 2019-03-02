@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.Stack;
 
 import com.calc.operations.Operation;
+import com.calc.solver.exception.InvalidResultException;
+import com.calc.solver.exception.PuzzleUnsolvedException;
 
 public class Solver {
 	private long goal;
@@ -61,12 +63,18 @@ public class Solver {
 			long previousState = currentState;
 			vistedStates.put(previousState, moves.size());
 
-			currentState = op.apply(currentState);
-			System.out.println("Moves : " + moves);
-			System.out.println("Applying " + op);
-			System.out.println("Result : " + currentState);
-			System.out.println("");
-			goDeeper();
+			try {
+				currentState = op.apply(currentState);
+
+				System.out.println("Moves : " + moves);
+				System.out.println("Applying " + op);
+				System.out.println("Result : " + currentState);
+				System.out.println("");
+
+				goDeeper();
+
+			} catch (InvalidResultException e) {
+			}
 
 			if (solved) {
 				return;
@@ -80,12 +88,16 @@ public class Solver {
 		}
 	}
 
-	public List<Operation> solve() {
+	public List<Operation> solve() throws PuzzleUnsolvedException {
 		if (solved) {
 			return moves;
 		}
 
 		goDeeper();
+		if (!solved) {
+			throw new PuzzleUnsolvedException();
+		}
+
 		return (moves);
 	}
 }

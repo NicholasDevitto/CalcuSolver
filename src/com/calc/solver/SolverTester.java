@@ -9,6 +9,8 @@ import com.calc.operations.Mirror;
 import com.calc.operations.Multiply;
 import com.calc.operations.Operation;
 import com.calc.operations.Reverse;
+import com.calc.solver.exception.InvalidResultException;
+import com.calc.solver.exception.PuzzleUnsolvedException;
 
 public class SolverTester {
 
@@ -21,21 +23,24 @@ public class SolverTester {
 		operations.add(new Multiply(3));
 
 		long start = -1;
-		int goal = 2020;
+		int goal = 202220;
 		int moves = 8;
 		Solver s = new Solver(goal, (int) start, moves, operations);
 
-		List<Operation> solution = s.solve();
-		if (solution.isEmpty()) {
+		List<Operation> solution;
+		try {
+			solution = s.solve();
+
+			for (Operation op : solution) {
+				long next = op.apply(start);
+				System.out.println(start + " " + op.toString() + " = " + next);
+				start = next;
+			}
+		} catch (PuzzleUnsolvedException | InvalidResultException e) {
 			System.out.println("This puzzle remains unsolved!");
 		}
 
 
-		for (Operation op : solution) {
-			long next = op.apply(start);
-			System.out.println(start + " " + op.toString() + " = " + next);
-			start = next;
-		}
 	}
 
 }
