@@ -1,6 +1,9 @@
 package com.calc.operations;
 
-public class Insert extends Operation {
+import com.calc.operations.modifier.Modifier;
+import com.calc.solver.exception.InvalidResultException;
+
+public class Insert extends Operation implements Modifable<Insert> {
 	private int y;
 
 	public Insert(int y) {
@@ -20,6 +23,11 @@ public class Insert extends Operation {
 	@Override
 	public String toString() {
 		return "(insert " + y + ")";
+	}
+
+	@Override
+	public Insert mod(Insert opertion, Modifier mod) throws InvalidResultException {
+		return new Insert((int) mod.apply(y));
 	}
 
 }

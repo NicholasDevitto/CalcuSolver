@@ -1,12 +1,15 @@
 package com.calc.solver;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import com.calc.operations.Modifable;
 import com.calc.operations.Operation;
+import com.calc.operations.modifier.Modifier;
 import com.calc.solver.exception.InvalidResultException;
 import com.calc.solver.exception.PuzzleUnsolvedException;
 
@@ -17,15 +20,18 @@ public class Solver {
 	private Map<Long, Integer> vistedStates;
 	private Stack<Operation> moves;
 	private Set<Operation> availableOperations;
+	//private Set<Modifier> availableMods;
 	private boolean solved = false;
 
 	public Solver(int goal, int currentState, int maxDepth,
 			Set<Operation> availableOperations) {
+		//, Set<Modifier> availableMods) {
 		super();
 		this.goal = goal;
 		this.currentState = currentState;
 		this.maxDepth = maxDepth;
 		this.availableOperations = availableOperations;
+		//this.availableMods = availableMods;
 
 		init();
 	}
@@ -35,7 +41,7 @@ public class Solver {
 		moves = new Stack<>();
 	}
 
-	private void goDeeper() {
+	private void goDeeper(Set<Operation> availableOperations) {
 		if (currentState == goal) {
 			solved = true;
 			return;
@@ -58,34 +64,48 @@ public class Solver {
 		}
 
 		for (Operation op : availableOperations) {
-			moves.push(op);
-
-			long previousState = currentState;
-			vistedStates.put(previousState, moves.size());
-
 			try {
-				currentState = op.apply(currentState);
+				moves.push(op);
 
-				System.out.println("Moves : " + moves);
-				System.out.println("Applying " + op);
-				System.out.println("Result : " + currentState);
-				System.out.println("");
+				if (op instanceof Modifier) {
+					Set<Operation> moddedOperations = new HashSet<>();
+					for (Operation opToMod : availableOperations) {
+						if (opToMod instanceof Modifable) {
+							moddedOperations.add(((Modifable)opToMod).mod(opToMod, (Modifier) op));
+						}else {
+							moddedOperations.add(opToMod);
+						}
+					}
+					goDeeper(moddedOperations);
+				} else {
 
-				goDeeper();
+					long previousState = currentState;
+					vistedStates.put(previousState, moves.size());
 
+					currentState = op.apply(currentState);
+
+					System.out.println("Moves : " + moves);
+					System.out.println("Applying " + op);
+					System.out.println("Result : " + currentState);
+					System.out.println("");
+
+					goDeeper(availableOperations);
+
+					// If we get to here, this state goes nowhere. 
+					// Therefore, never visit it again.
+					currentState = previousState;
+				}
+
+				if (solved) {
+					return;
+				}
+
+				moves.pop();
 			} catch (InvalidResultException e) {
 			}
 
-			if (solved) {
-				return;
-			}
-
-			moves.pop();
-
-			// If we get to here, this state goes nowhere. 
-			// Therefore, never visit it again.
-			currentState = previousState;
 		}
+
 	}
 
 	public List<Operation> solve() throws PuzzleUnsolvedException {
@@ -93,7 +113,7 @@ public class Solver {
 			return moves;
 		}
 
-		goDeeper();
+		goDeeper(availableOperations);
 		if (!solved) {
 			throw new PuzzleUnsolvedException();
 		}
